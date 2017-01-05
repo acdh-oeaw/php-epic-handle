@@ -18,7 +18,7 @@
     },
     "autoload": {
         "psr-4": {
-            "zozlak\\util\\": "src/acdhOeaw/epicHandle"
+            "acdhOeaw\\epicHandle\\": "src/acdhOeaw/epicHandle"
         }
     }
 }
