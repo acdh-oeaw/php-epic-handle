@@ -1,0 +1,24 @@
+{
+    "name": "acdh-oeaw/epic-handle",
+    "type": "library",
+    "description": "Library for managing EPIC handles (PIDs)",
+    "keywords": [],
+    "homepage": "https://github.com/acdh-oeaw/php-epic-handle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mateusz Żółtak",
+            "email": "zozlak@zozlak.org",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3",
+        "guzzlehttp/guzzle": "~6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "zozlak\\util\\": "src/acdhOeaw/epicHandle"
+        }
+    }
+}
