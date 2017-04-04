@@ -64,10 +64,10 @@ class HandleService {
             if ($suffix) {
                 $param[] = 'suffix=' . urlencode($suffix);
             }
-            $url = $this->url . '?' . implode('&', $param);
+            $reqUrl = $this->url . '?' . implode('&', $param);
         }
 
-        $request = new Request($method, $url, $this->headers, $this->reqData($url));
+        $request = new Request($method, $reqUrl, $this->headers, $this->reqData($url));
         $response = $this->client->send($request);
         $pid = $response->getHeader('Location');
         return $pid[0];
