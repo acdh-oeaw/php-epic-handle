@@ -3,7 +3,7 @@
 /*
  * The MIT License
  *
- * Copyright 2017 zozlak.
+ * Copyright 2017 Austrian Centre for Digital Humanities.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,17 +37,19 @@ use RuntimeException;
  */
 class HandleService {
 
+    const MOCK_URL = 'http://test';
+
     private $url;
     private $headers;
     private $client;
 
     public function __construct($url, $prefix, $login, $pswd) {
-        $this->url = preg_replace('|/?(handles)?/?$|', '', $url) . '/handles/' . $prefix . '/';
+        $this->url     = preg_replace('|/?(handles)?/?$|', '', $url) . '/handles/' . $prefix . '/';
         $this->headers = array(
             'Authorization' => 'Basic ' . base64_encode($login . ':' . $pswd),
-            'Content-Type' => 'application/json'
+            'Content-Type'  => 'application/json'
         );
-        $this->client = new Client();
+        $this->client  = $this->url !== self::MOCK_URL . '/handles/' . $prefix . '/' ? new Client() : new MockClient;
     }
 
     public function create($url, $uuid = null, $prefix = null, $suffix = null) {
@@ -55,7 +57,7 @@ class HandleService {
         if ($uuid) {
             $prefix = $prefix ? $prefix . '-' : '';
             $suffix = $suffix ? '-' . $suffix : '';
-            $url = urlencode($prefix . $uuid . $suffix);
+            $url    = urlencode($prefix . $uuid . $suffix);
         } else {
             $param = array();
             if ($prefix) {
@@ -67,32 +69,32 @@ class HandleService {
             $reqUrl = $this->url . '?' . implode('&', $param);
         }
 
-        $request = new Request($method, $reqUrl, $this->headers, $this->reqData($url));
+        $request  = new Request($method, $reqUrl, $this->headers, $this->reqData($url));
         $response = $this->client->send($request);
-        $pid = $response->getHeader('Location');
+        $pid      = $response->getHeader('Location');
         return $pid[0];
     }
 
     public function update($pid, $url) {
-        $pid = $this->sanitizePid($pid);
-        $request = new Request('PUT', $pid, $this->headers, $this->reqData($url));
+        $pid      = $this->sanitizePid($pid);
+        $request  = new Request('PUT', $pid, $this->headers, $this->reqData($url));
         $response = $this->client->send($request);
         return $response->getStatusCode();
     }
 
     public function delete($pid) {
-        $pid = $this->sanitizePid($pid);
-        $request = new Request('DELETE', $pid, $this->headers);
+        $pid      = $this->sanitizePid($pid);
+        $request  = new Request('DELETE', $pid, $this->headers);
         $response = $this->client->send($request);
         return $response->getStatusCode();
     }
-    
-    private function reqData($url){
+
+    private function reqData($url) {
         return json_encode(array(
             array('type' => 'URL', 'parsed_data' => $url)
         ));
     }
-    
+
     private function sanitizePid($pid) {
         if (strpos($pid, $this->url) !== 0) {
             if (strpos($pid, '/') !== false) {
@@ -102,5 +104,4 @@ class HandleService {
         }
         return $pid;
     }
-
 }
