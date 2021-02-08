@@ -98,7 +98,7 @@ class HandleService {
     private function sanitizePid($pid) {
         if (strpos($pid, $this->url) !== 0) {
             if (strpos($pid, '/') !== false) {
-                throw new RuntimeException("Wrong PID $pid - expected prefix $this->URL");
+                throw new RuntimeException("Wrong PID $pid - expected prefix $this->url");
             }
             $pid = $this->url . $pid;
         }
