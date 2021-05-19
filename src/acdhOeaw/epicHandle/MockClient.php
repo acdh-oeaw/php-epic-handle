@@ -27,17 +27,19 @@
 namespace acdhOeaw\epicHandle;
 
 use RuntimeException;
-use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Class mocking the PID service connection. To be used in tests.
  *
  * @author zozlak
  */
-class MockClient {
+class MockClient implements ClientInterface {
 
-    public function send(Request $request): Response {
+    public function sendRequest(RequestInterface $request): ResponseInterface {
         switch (strtolower($request->getMethod())) {
             case 'put':
                 return new Response(201);

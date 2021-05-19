@@ -28,6 +28,7 @@ namespace acdhOeaw\epicHandle;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use Psr\Http\Client\ClientInterface;
 use RuntimeException;
 
 /**
@@ -39,11 +40,17 @@ class HandleService {
 
     const MOCK_URL = 'http://test';
 
-    private $url;
-    private $headers;
-    private $client;
+    private string $url;
 
-    public function __construct($url, $prefix, $login, $pswd) {
+    /**
+     * 
+     * @var array<string, string>
+     */
+    private array $headers;
+    private ClientInterface $client;
+
+    public function __construct(string $url, string $prefix, string $login,
+                                string $pswd) {
         $this->url     = preg_replace('|/?(handles)?/?$|', '', $url) . '/handles/' . $prefix . '/';
         $this->headers = array(
             'Authorization' => 'Basic ' . base64_encode($login . ':' . $pswd),
@@ -52,12 +59,13 @@ class HandleService {
         $this->client  = $this->url !== self::MOCK_URL . '/handles/' . $prefix . '/' ? new Client() : new MockClient;
     }
 
-    public function create($url, $uuid = null, $prefix = null, $suffix = null) {
+    public function create(string $url, ?string $uuid = null,
+                           ?string $prefix = null, ?string $suffix = null): string {
         $method = $uuid != '' ? 'PUT' : 'POST';
         if ($uuid) {
             $prefix = $prefix ? $prefix . '-' : '';
             $suffix = $suffix ? '-' . $suffix : '';
-            $url    = urlencode($prefix . $uuid . $suffix);
+            $reqUrl = $this->url . '/' . urlencode($prefix . $uuid . $suffix);
         } else {
             $param = array();
             if ($prefix) {
@@ -70,32 +78,32 @@ class HandleService {
         }
 
         $request  = new Request($method, $reqUrl, $this->headers, $this->reqData($url));
-        $response = $this->client->send($request);
+        $response = $this->client->sendRequest($request);
         $pid      = $response->getHeader('Location');
         return $pid[0];
     }
 
-    public function update($pid, $url) {
+    public function update(string $pid, string $url): int {
         $pid      = $this->sanitizePid($pid);
         $request  = new Request('PUT', $pid, $this->headers, $this->reqData($url));
-        $response = $this->client->send($request);
+        $response = $this->client->sendRequest($request);
         return $response->getStatusCode();
     }
 
-    public function delete($pid) {
+    public function delete(string $pid): int {
         $pid      = $this->sanitizePid($pid);
         $request  = new Request('DELETE', $pid, $this->headers);
-        $response = $this->client->send($request);
+        $response = $this->client->sendRequest($request);
         return $response->getStatusCode();
     }
 
-    private function reqData($url) {
-        return json_encode(array(
+    private function reqData(string $url): string {
+        return (string) json_encode(array(
             array('type' => 'URL', 'parsed_data' => $url)
         ));
     }
 
-    private function sanitizePid($pid) {
+    private function sanitizePid(string $pid): string {
         if (strpos($pid, $this->url) !== 0) {
             if (strpos($pid, '/') !== false) {
                 throw new RuntimeException("Wrong PID $pid - expected prefix $this->url");
