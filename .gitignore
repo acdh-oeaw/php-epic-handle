@@ -3,3 +3,4 @@
 /playground.php
 /vendor
 /composer.lock
+/checks/*csv
