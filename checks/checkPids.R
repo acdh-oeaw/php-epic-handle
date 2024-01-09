@@ -26,55 +26,50 @@ arche = readr::read_csv2('pids_arche.csv') %>%
   mutate(pid = sub('https://hdl.handle.net/', '', pid))
 hdl = readr::read_csv2('pids.csv') %>%
   mutate(
-    data = if_else(grepl('^http', url), NA_character_, url),
-    url = if_else(grepl('^http', url), url, NA_character_)
-  ) %>%
-  filter(grepl('./.', pid))
+    finalurl = coalesce(finalurl, url)
+  )
 
 # ARCHE-only
 arche %>% 
   anti_join(hdl) %>%
   select(-topcolclass) %>%
-  tidyr::nest(id, pid)
+  tidyr::nest(.by = c(topcolid, topcollabel))
 arche %>% 
   anti_join(hdl) %>%
   select(-topcolclass) %>%
   arrange(topcollabel) %>%
   readr::write_csv2('arche_only.csv', na = '')
 
-all = full_join(hdl %>% mutate(hdl = T), arche %>% mutate(arche = T, pid = sub('https://hdl.handle.net/', '', pid))) %>% 
+all = full_join(hdl %>% mutate(hdl = T), arche %>% mutate(arche = T)) %>% 
   mutate(
     domain = sub('^(https?://[^/]+).*', '\\1', url),
     path = sub('^(https?://[^/]+)/([^/]+).*', '\\2', url)
   ) %>%
   mutate(
-    path = if_else(domain %in% c('http://www.bruckner-online.at', 'https://digitarium-app.acdh.oeaw.ac.at', 'https://ferdinand-korrespondenz.acdh.oeaw.ac.at'), '', path),
+    path = if_else(domain %in% c('http://www.bruckner-online.at', 'https://digitarium-app.acdh.oeaw.ac.at', 'https://ferdinand-korrespondenz.acdh.oeaw.ac.at') | status %in% c('Could not resolve host'), '', path),
     status = case_when(
-      status == '400' ~ 'Bad request',
-      status == '401' ~ 'Authorization required',
-      status == '403' ~ 'Access denied',
-      status == '404' ~ 'Redirect URL does not exist',
+      status == '400' ~ 'Bad request (400)',
+      status == '401' ~ 'Access denied (401/403)',
+      status == '403' ~ 'Access denied (401/403)',
+      status == '404' ~ 'Redirect URL does not exist (404)',
       status == '200' ~ 'OK',
+      status %in% c('empty URL', 'no URL') ~ 'Empty URL/No URL',
       TRUE ~ status
     )
   )
 all %>% group_by(arche, hdl) %>% summarize(n = n())
-all %>% group_by(status) %>% summarize(n = n())
+all %>% group_by(arche, status) %>% summarize(n = n()) %>% arrange(arche, desc(n))
 all %>% 
-  filter(status != 'OK') %>%
+  filter(status != 'OK' | is.na(status)) %>%
   group_by(arche, domain, path, status) %>%
   summarize(n = n()) %>%
-  arrange(arche,  domain, path, status) %>%
+  arrange(arche,  status, desc(n), domain, path) %>%
   print(n = 1000)
 
-# HTTP error
-d = all %>%
-  filter(status == 'HTTP error') %>%
-  select(id, pid, data) %>%
-  mutate(
-    url = purrr::map_chr(data, function(x) (jsonlite::fromJSON(jsonlite::fromJSON(x)$piddata) %>% filter(type == 'URL'))$parsed_data %>% unlist()),
-    error = sub('^.*cURL error [0-9]+: ([^:]+).*$', '\\1', data)
-  )
-d %>%
-  group_by(id, url, error) %>%
-  summarize(n = n())
+all %>% 
+  filter(status != 'OK') %>% 
+  mutate(project = paste0(domain, '/', path))
+  select(-data, -hdl, -arche, -id, -topcolid, -topcolclass, -topcollabel) %>%
+  arrange(domain, path, status)
+  readr::write_csv2('errors.csv', na = '')
+  
