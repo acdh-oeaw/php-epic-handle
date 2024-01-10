@@ -24,7 +24,7 @@
 library(dplyr)
 arche = readr::read_csv2('pids_arche.csv') %>%
   mutate(pid = sub('https://hdl.handle.net/', '', pid))
-hdl = readr::read_csv2('pids.csv') %>%
+hdl = readr::read_csv2('pids.csv', col_types = 'ccccc') %>%
   mutate(
     finalurl = coalesce(finalurl, url)
   )
@@ -43,33 +43,37 @@ arche %>%
 all = full_join(hdl %>% mutate(hdl = T), arche %>% mutate(arche = T)) %>% 
   mutate(
     domain = sub('^(https?://[^/]+).*', '\\1', url),
-    path = sub('^(https?://[^/]+)/([^/]+).*', '\\2', url)
-  ) %>%
-  mutate(
-    path = if_else(domain %in% c('http://www.bruckner-online.at', 'https://digitarium-app.acdh.oeaw.ac.at', 'https://ferdinand-korrespondenz.acdh.oeaw.ac.at') | status %in% c('Could not resolve host'), '', path),
+    path = if_else(domain == 'https://id.acdh.oeaw.ac.at', sub('^(https?://[^/]+)/([^/]+).*', '\\2', url), ''),
     status = case_when(
       status == '400' ~ 'Bad request (400)',
       status == '401' ~ 'Access denied (401/403)',
       status == '403' ~ 'Access denied (401/403)',
       status == '404' ~ 'Redirect URL does not exist (404)',
+      status == '200' & url == 'https://arche.acdh.oeaw.ac.at/brokenpid' ~ 'OK (broken)',
       status == '200' ~ 'OK',
       status %in% c('empty URL', 'no URL') ~ 'Empty URL/No URL',
       TRUE ~ status
-    )
+    ),
+    user = purrr::map_chr(data, function(x){
+      if (!is.na(x)) {
+        return(unlist(jsonlite::fromJSON(x[1])$parsed_data)['adminId'])
+      } else {
+        return(NA_character_)
+      }
+    })
   )
 all %>% group_by(arche, hdl) %>% summarize(n = n())
-all %>% group_by(arche, status) %>% summarize(n = n()) %>% arrange(arche, desc(n))
+all %>% group_by(arche, hdl, status, user) %>% summarize(n = n()) %>% arrange(arche, desc(n))
 all %>% 
-  filter(status != 'OK' | is.na(status)) %>%
+  filter(!grepl('OK|Empty', status) | is.na(status)) %>%
   group_by(arche, domain, path, status) %>%
   summarize(n = n()) %>%
-  arrange(arche,  status, desc(n), domain, path) %>%
+  arrange(arche, status, domain == 'https://id.acdh.oeaw.ac.at', desc(n), domain, path) %>%
   print(n = 1000)
-
 all %>% 
-  filter(status != 'OK') %>% 
-  mutate(project = paste0(domain, '/', path))
-  select(-data, -hdl, -arche, -id, -topcolid, -topcolclass, -topcollabel) %>%
-  arrange(domain, path, status)
+  filter(status == 'Redirect URL does not exist (404)') %>% 
+  mutate(project = paste0(domain, '/', path)) %>%
+  select(project, pid, url) %>%
+  arrange(project, url) %>%
   readr::write_csv2('errors.csv', na = '')
   

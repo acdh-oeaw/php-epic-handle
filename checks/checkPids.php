@@ -115,9 +115,9 @@ while (count($pids) > 0) {
                 $d = json_decode((string) $r->getBody());
                 $d = array_filter($d, fn($x) => $x->type === 'URL');
                 if (!isset($d[0])) {
-                    fwrite($o, "$pid;no URL;;;" . json_encode((string) $r->getBody(),  JSON_UNESCAPED_SLASHES) . "\n");
+                    fwrite($o, "$pid;no URL;;;" . json_encode(json_decode((string) $r->getBody()),  JSON_UNESCAPED_SLASHES) . "\n");
                 } elseif(empty(trim($d[0]->parsed_data))) {
-                    fwrite($o, "$pid;empty URL;;;" . json_encode((string) $r->getBody(),  JSON_UNESCAPED_SLASHES) . "\n");
+                    fwrite($o, "$pid;empty URL;;;" . json_encode(json_decode((string) $r->getBody()),  JSON_UNESCAPED_SLASHES) . "\n");
                 } else {
                     $urlsTmp[$i] = $d[0]->parsed_data;
                 }
