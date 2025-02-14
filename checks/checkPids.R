@@ -76,4 +76,3 @@ all %>%
   select(project, pid, url) %>%
   arrange(project, url) %>%
   readr::write_csv2('errors.csv', na = '')
-  

@@ -147,10 +147,10 @@ while (count($pids) > 0) {
                 }
                 fwrite($o, "$pid;" . $r->getStatusCode() . ";$url;$finalUrl;\n");
             },
-            'rejected' => function(Psr\Http\Client\NetworkExceptionInterface $e, int $i) use ($pidsTmp, $urlsTmp, $o){
+            'rejected' => function(\GuzzleHttp\Exception\TransferException $e, int $i) use ($pidsTmp, $urlsTmp, $o){
                 $pid = $pidsTmp[$i];
                 $url = $urlsTmp[$i];
-                $finalUrl = $e->getRequest()->getUri();
+                $finalUrl = method_exists($e, 'getRequest') ? $e->getRequest()->getUri() : '?';
                 $msg = $e->getMessage();
                 if (str_starts_with($msg, 'cURL error 6:')) {
                     $status = 'Could not resolve host';
