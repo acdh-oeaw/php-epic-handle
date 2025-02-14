@@ -52,10 +52,10 @@ class HandleService {
     public function __construct(string $url, string $prefix, string $login,
                                 string $pswd) {
         $this->url     = preg_replace('|/?(handles)?/?$|', '', $url) . '/handles/' . $prefix . '/';
-        $this->headers = array(
+        $this->headers = [
             'Authorization' => 'Basic ' . base64_encode($login . ':' . $pswd),
             'Content-Type'  => 'application/json'
-        );
+        ];
         $this->client  = $this->url !== self::MOCK_URL . '/handles/' . $prefix . '/' ? new Client() : new MockClient;
     }
 
@@ -67,7 +67,7 @@ class HandleService {
             $suffix = $suffix ? '-' . $suffix : '';
             $reqUrl = $this->url . '/' . urlencode($prefix . $uuid . $suffix);
         } else {
-            $param = array();
+            $param = [];
             if ($prefix) {
                 $param[] = 'prefix=' . urlencode($prefix);
             }
@@ -79,7 +79,10 @@ class HandleService {
 
         $request  = new Request($method, $reqUrl, $this->headers, $this->reqData($url));
         $response = $this->client->sendRequest($request);
-        $pid      = $response->getHeader('Location');
+        if ($response->getStatusCode() > 201) {
+            throw new HandleException($response->getStatusCode(), 'Failed to create a handle with: ' . $response->getBody());
+        }
+        $pid = $response->getHeader('Location');
         return $pid[0];
     }
 
@@ -98,9 +101,9 @@ class HandleService {
     }
 
     private function reqData(string $url): string {
-        return (string) json_encode(array(
-            array('type' => 'URL', 'parsed_data' => $url)
-        ));
+        return (string) json_encode([
+                ['type' => 'URL', 'parsed_data' => $url]
+        ]);
     }
 
     private function sanitizePid(string $pid): string {
