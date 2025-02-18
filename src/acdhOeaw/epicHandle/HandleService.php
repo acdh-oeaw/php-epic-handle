@@ -80,7 +80,7 @@ class HandleService {
         $request  = new Request($method, $reqUrl, $this->headers, $this->reqData($url));
         $response = $this->client->sendRequest($request);
         if ($response->getStatusCode() > 201) {
-            throw new HandleException($response->getStatusCode(), 'Failed to create a handle with: ' . $response->getBody());
+            throw new HandleException('Failed to create a handle with: ' . $response->getBody(), $response->getStatusCode());
         }
         $pid = $response->getHeader('Location');
         return $pid[0];
