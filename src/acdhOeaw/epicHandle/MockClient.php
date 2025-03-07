@@ -42,12 +42,12 @@ class MockClient implements ClientInterface {
     public function sendRequest(RequestInterface $request): ResponseInterface {
         switch (strtolower($request->getMethod())) {
             case 'put':
-                return new Response(201);
+                return new Response(204);
             case 'post':
                 $pid = (string) $request->getUri()->withQuery('') . bin2hex(random_bytes(12));
-                return new Response(204, ['Location' => $pid]);
+                return new Response(201, ['Location' => $pid]);
             case 'delete':
-                return new Response(201);
+                return new Response(204);
             default:
                 throw new RuntimeException("Unknown request");
         }

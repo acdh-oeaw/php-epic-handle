@@ -56,7 +56,7 @@ class HandleService {
             'Authorization' => 'Basic ' . base64_encode($login . ':' . $pswd),
             'Content-Type'  => 'application/json'
         ];
-        $this->client  = $this->url !== self::MOCK_URL . '/handles/' . $prefix . '/' ? new Client() : new MockClient;
+        $this->client  = $this->url !== self::MOCK_URL . '/handles/' . $prefix . '/' ? new Client() : new MockClient();
     }
 
     public function create(string $url, ?string $uuid = null,
