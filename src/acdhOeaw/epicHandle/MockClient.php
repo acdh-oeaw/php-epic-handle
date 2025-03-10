@@ -39,12 +39,18 @@ use Psr\Http\Message\ResponseInterface;
  */
 class MockClient implements ClientInterface {
 
+    /**
+     * Pid to be minted uppon a POST request
+     */
+    static public string | null $pid = null;
+
     public function sendRequest(RequestInterface $request): ResponseInterface {
         switch (strtolower($request->getMethod())) {
             case 'put':
                 return new Response(204);
             case 'post':
-                $pid = (string) $request->getUri()->withQuery('') . bin2hex(random_bytes(12));
+                $pid = self::$pid ?? bin2hex(random_bytes(12));
+                $pid = (string) $request->getUri()->withQuery('') . $pid;
                 return new Response(201, ['Location' => $pid]);
             case 'delete':
                 return new Response(204);
