@@ -6,4 +6,5 @@
 /checks/*csv
 /checks/vendor
 /checks/composer.lock
+/checks/check.sh
 .Rhistory

@@ -80,6 +80,7 @@ $pids = array_values($pids);
 $cRes = new GuzzleHttp\Client([
     'http_errors' => false,
     'timeout' => $args->timeout,
+    'stream' => true,
     'allow_redirects' => [
         'max' => 5,
         'track_redirects' => true,
@@ -91,6 +92,7 @@ if (!empty($args->repoLogin) && !empty($args->repoPswd) && !empty($args->repoNms
         'auth' => [$args->repoLogin, $args->repoPswd], 
         'http_errors' => false,
         'timeout' => $args->timeout,
+        'stream' => true,
         'allow_redirects' => [
             'max' => 5,
             'track_redirects' => true,
@@ -122,7 +124,7 @@ while (count($pids) > 0) {
                     $urlsTmp[$i] = $d[0]->parsed_data;
                 }
             },
-            'rejected' => function(GuzzleHttp\Exception\RequestException $e, int $i) use ($pidsTmp, $o){
+            'rejected' => function(\Exception $e, int $i) use ($pidsTmp, $o){
                 fwrite($o, $pidsTmp[$i]. ";failed to read PID data;;;" . json_encode($e) . "\n");
             }
         ]
@@ -156,6 +158,12 @@ while (count($pids) > 0) {
                     $status = 'Could not resolve host';
                 } elseif (str_starts_with($msg, 'cURL error 28:')) {
                     $status = 'Connection timeout';
+                } elseif (str_starts_with($msg, 'cURL error 60:')) {
+                    $status = 'Wrong SSL certificate';
+                } elseif (str_starts_with($msg, 'Will not follow more than')) {
+                    $status = 'Redirects loop';
+                } elseif (str_starts_with($msg, 'cURL error 23: Failed reading the chunked-encoded stream')) {
+                    $status = 'Wrongly encoded content';
                 }
                 if (isset($status)) {
                     fwrite($o, "$pid;$status;$url;$finalUrl;\n");
