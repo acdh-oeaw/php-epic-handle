@@ -22,11 +22,11 @@ jobs:
       run: vendor/bin/phpstan analyze -l 8 src
     #- name: phpunit
     #  run: XDEBUG_MODE=coverage vendor/bin/phpunit
-    - name: coveralls
-      if: ${{ matrix.php == 8.5 }}
-      run: |
-        export COVERALLS_RUN_LOCALLY=1
-        export COVERALLS_REPO_TOKEN=${{ secrets.coverallsToken }}
-        rm -fR composer.json composer.lock vendor
-        composer require php-coveralls/php-coveralls
-        php vendor/bin/php-coveralls -v
+    #- name: coveralls
+    #  if: ${{ matrix.php == 8.5 }}
+    #  run: |
+    #    export COVERALLS_RUN_LOCALLY=1
+    #    export COVERALLS_REPO_TOKEN=${{ secrets.coverallsToken }}
+    #    rm -fR composer.json composer.lock vendor
+    #    composer require php-coveralls/php-coveralls
+    #    php vendor/bin/php-coveralls -v
