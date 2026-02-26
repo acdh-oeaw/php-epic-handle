@@ -1,0 +1,32 @@
+name: phpunit
+
+on: push
+
+jobs:
+  phpunit:
+    strategy:
+      matrix:
+        php: [8.1, 8.2, 8.3, 8.4, 8.5]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        coverage: xdebug
+      env:
+        fail-fast: true
+    - name: composer
+      run: composer update
+    - name: phpstan
+      run: vendor/bin/phpstan analyze -l 8 src tests
+    - name: phpunit
+      run: XDEBUG_MODE=coverage vendor/bin/phpunit
+    - name: coveralls
+      if: ${{ matrix.php == 8.5 }}
+      run: |
+        export COVERALLS_RUN_LOCALLY=1
+        export COVERALLS_REPO_TOKEN=${{ secrets.coverallsToken }}
+        rm -fR composer.json composer.lock vendor
+        composer require php-coveralls/php-coveralls
+        php vendor/bin/php-coveralls -v
