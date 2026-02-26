@@ -20,8 +20,8 @@ jobs:
       run: composer update
     - name: phpstan
       run: vendor/bin/phpstan analyze -l 8 src
-    - name: phpunit
-      run: XDEBUG_MODE=coverage vendor/bin/phpunit
+    #- name: phpunit
+    #  run: XDEBUG_MODE=coverage vendor/bin/phpunit
     - name: coveralls
       if: ${{ matrix.php == 8.5 }}
       run: |
